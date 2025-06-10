@@ -1,23 +1,59 @@
-# 工作流的名称
-name: Say Hello
+# 工作流名称
+name: Deploy static website to Pages
 
-# 触发工作流的事件
+# 触发条件：推送到 main 分支时
 on:
-  # 当有代码推送到 main 分支时触发
   push:
     branches:
       - main
 
-# 工作流要执行的任务
-jobs:
-  # 定义一个名为 "hello-job" 的任务
-  hello-job:
-    # 指定任务运行在哪个操作系统上，这里我们用最新的 Ubuntu
-    runs-on: ubuntu-latest
+# 设置工作流的权限，允许它部署到 GitHub Pages
+permissions:
+  contents: read
+  pages: write
+  id-token: write
 
-    # 任务包含的步骤
+# 定义工作流任务
+jobs:
+  # 构建任务
+  build:
+    runs-on: ubuntu-latest
     steps:
-      # 第一步：打印问候语
-      - name: Print a greeting
-        # "run" 关键字用来执行命令行脚本
-        run: echo "Hello, GitHub Actions! This is my first workflow."
+      # 第一步：检出（下载）你的仓库代码到 Runner 中
+      - name: Checkout repository
+        uses: actions/checkout@v4 # 这是一个官方预设的 Action
+
+      # 第二步：设置 GitHub Pages
+      - name: Setup Pages
+        uses: actions/setup-pages@v5
+
+      # 第三步：构建项目并上传产物（Artifact）
+      # "产物"是指构建过程产生的文件，这里就是我们的网站文件
+      - name: Build and Upload Artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          # 指定要上传的文件夹。'.' 代表当前目录（整个项目）
+          path: '.'
+
+  # 部署任务
+  deploy:
+    # 部署任务依赖于构建任务的成功
+    needs: build
+
+    # 部署任务需要的权限
+    permissions:
+      pages: write
+      id-token: write
+
+    # 指定部署的环境类型
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }} # 从部署步骤中获取 URL
+
+    # 运行在 Ubuntu 上
+    runs-on: ubuntu-latest
+    steps:
+      # 使用官方的 Action 来进行部署
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
