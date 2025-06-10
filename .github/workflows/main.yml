@@ -21,7 +21,7 @@ jobs:
     steps:
       # 第一步：检出（下载）你的仓库代码到 Runner 中
       - name: Checkout repository
-        uses: actions/checkout@v4 # 这是一个官方预设的 Action
+        uses: actions/checkout@v4
 
       # 第二步：设置 GitHub Pages
       - name: Setup Pages
